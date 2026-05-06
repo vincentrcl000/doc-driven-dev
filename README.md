@@ -24,16 +24,24 @@
     - `config.json`: Skill behavior (Reference sources, sync rules, host preferences).
     - `state.json`: Dynamic state (Current task, known drifts, session logs).
 
+## Prerequisites
+
+This skill is designed for the **Oh My Agent** ecosystem. To enable slash commands (`/`) and automatic recognition, you **must** have the corresponding orchestrator installed:
+- **For Claude Code**: Install [OMC (oh-my-claudecode)](https://github.com/vincentrcl000/oh-my-claudecode).
+- **For Codex**: Install [OMX (oh-my-codex)](https://github.com/vincentrcl000/oh-my-codex).
+
+---
+
 ## Installation & Setup
 
 ### For Claude Code
-1. Copy the `doc-driven-dev` directory to `.agent/skills/` in your project.
-2. Ensure a `.claude/` directory exists at the project root.
-3. Type `Enable doc-driven-dev in this project` to initialize.
+1. Copy the `doc-driven-dev` directory to `~/.claude/skills/` on your machine.
+2. Type `Enable doc-driven-dev in this project` to initialize.
 
 ### For Codex
-1. Place the `doc-driven-dev` directory in `.agent/skills/` or your global skill path.
-2. Type `/skill doc-driven-dev` (or trigger it directly in conversation) to activate.
+1. Copy the `doc-driven-dev` directory to `~/.codex/skills/` on your machine.
+2. Run `omx reload skills` in your terminal or restart your Codex session.
+3. Type `/skill doc-driven-dev` (or `/` to select from the list) to activate.
 
 ## Usage
 
@@ -93,16 +101,24 @@ User: "Apply doc-driven-dev to AwesomeApp"
     - `config.json`：技能行为（参考来源、同步规则、宿主偏好）。
     - `state.json`：动态状态（当前任务、已知 Drift、会话日志）。
 
+## 前提条件
+
+本技能专为 **Oh My Agent** 生态设计。为了启用斜杠命令 (`/`) 和自动识别功能，你**必须**安装对应的编排器：
+- **对于 Claude Code**：安装 [OMC (oh-my-claudecode)](https://github.com/vincentrcl000/oh-my-claudecode)。
+- **对于 Codex**：安装 [OMX (oh-my-codex)](https://github.com/vincentrcl000/oh-my-codex)。
+
+---
+
 ## 安装与配置
 
 ### 在 Claude Code 中安装
-1. 将 `doc-driven-dev` 目录复制到项目的 `.agent/skills/` 下。
-2. 确保项目根目录存在 `.claude/` 目录。
-3. 输入 `在这个项目启用 doc-driven-dev` 即可完成初始化。
+1. 将 `doc-driven-dev` 目录复制到你机器的 `~/.claude/skills/` 下。
+2. 输入 `在这个项目启用 doc-driven-dev` 即可完成初始化。
 
 ### 在 Codex 中安装
-1. 将 `doc-driven-dev` 目录放置在项目的 `.agent/skills/` 或你的全局技能路径中。
-2. 输入 `/skill doc-driven-dev`（或直接在对话中触发）即可激活。
+1. 将 `doc-driven-dev` 目录复制到你机器的 `~/.codex/skills/` 下。
+2. 在终端运行 `omx reload skills` 或重启 Codex 会话以刷新技能列表。
+3. 输入 `/skill doc-driven-dev`（或输入 `/` 从列表中选择）即可激活。
 
 ## 使用方式
 
