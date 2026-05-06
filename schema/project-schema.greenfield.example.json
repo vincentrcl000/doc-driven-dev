@@ -1,0 +1,28 @@
+{
+  "schema_version": "1.0",
+  "project_type": "greenfield",
+  "project_name": "MyNewProject",
+  "created_at": "2026-05-05",
+  "last_synced_at": "2026-05-05",
+  "doc_conventions": {
+    "roots": ["docs/"],
+    "version_grouping": { "enabled": false },
+    "phase_grouping": { "enabled": false },
+    "design_doc_pattern": "**/*.md",
+    "roadmap_pattern": null,
+    "metadata_location": "embedded",
+    "naming_template": "{topic}.md"
+  },
+  "scope": {
+    "active_versions": ["main"],
+    "maintenance_versions": [],
+    "archived_versions": []
+  },
+  "roadmap_references": [],
+  "document_inventory": [],
+  "code_conventions": {
+    "language": "typescript",
+    "roots": ["src/"],
+    "ignore_patterns": ["**/node_modules/**", "**/dist/**"]
+  }
+}
