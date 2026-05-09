@@ -101,7 +101,7 @@ If the user does not respond (e.g., auto-mode), downgrade according to priority:
 
 > **Key Clarification**: Deep sections require "Design Decisions at the implementation level," **NOT the implementation code itself**. Code in design documents easily drifts from the actual codebase and causes ambiguity. This is a HARD RULE, consistent with `design-refine.md §Rule 1 / §Hard Constraint #1`.
 
-All sections with "Implementation" semantics in `inputs.required_sections[]` (e.g., `Implementation Strategy`, `Key Tech Details`, `Core Component Design`) MUST be expressed in the following **non-code forms**:
+All sections with "Implementation" semantics in `inputs.required_sections[]` (e.g., `Implementation Strategy`, `Key Tech Details`, `Core Component Design`) MUST be expressed in the following forms (non-code preferred; see Algorithmic Pseudocode for the narrow exception):
 
 | Form | Description | When to Use |
 |:---|:---|:---|
@@ -111,10 +111,12 @@ All sections with "Implementation" semantics in `inputs.required_sections[]` (e.
 | **Data Flow / State Machine** | Mermaid or ASCII; draw states and transitions only, no implementation. | Complex control flow, life cycles. |
 | **Error Matrix** | "Error Source / Detection Point / Recovery Action / Residual Risk" columns. | Fault tolerance, degradation, rollback paths. |
 | **Edge Case Checklist** | Bulleted list; each item has a trigger condition + mitigation strategy. | Boundaries, race conditions, resource exhaustion. |
+| **Algorithmic Pseudocode** *(narrow exception)* | Language-agnostic logic sketch only. **≤ 20 lines per block**. Must be annotated `<!-- pseudocode: language-agnostic, not for direct implementation -->`. No real language syntax, no concrete crate/lib/type names not yet introduced in the project. | Non-trivial algorithms, complex guard conditions, or protocol logic where Decision Table / State Machine genuinely loses precision. If in doubt, use Decision Table instead. |
 
 **Redlines** (Rework triggered if violated, per `design-refine.md §Self-check #2 / §Hard Constraint #1`):
 
-- Single pseudocode/code block > 10 lines → Must replace with decision table or module map.
+- Code block > 20 lines → Always rework; replace with Decision Table, Module Map, or State Machine.
+- Code block 10–20 lines → Must qualify as Algorithmic Pseudocode: language-agnostic + `<!-- pseudocode: language-agnostic, not for direct implementation -->` annotation required; if missing annotation or contains real syntax, rework.
 - Implementation blocks like `fn xxx() { /* implementation */ }` (even if ≤ 10 lines) → Keep signature only if used as "Interface Contract"; function body MUST be deleted.
 - Appearance of crates / types / paths not yet introduced in the project → Treated as "Creating Code"; see Hard Constraints #1 / #2.
 - Chapter titles with **language names** like "Rust Implementation / Python Implementation" are considered anti-patterns; rename to "Implementation Strategy" / "Key Implementation Decisions" / "Implementation Mapping."
@@ -123,7 +125,7 @@ All sections with "Implementation" semantics in `inputs.required_sections[]` (e.
 
 - Depth ≠ Code Volume. Depth = Decision Density + Boundary Coverage + Precise Mapping to existing code.
 - A qualified "Implementation Strategy" section contains **no function bodies** yet allows implementers to uniquely translate decisions into code.
-- If it's "impossible to explain a mechanism without writing code," it's a granularity issue; split components, add state machine diagrams, or add decision tables instead of reverting to pasting code.
+- Algorithmic Pseudocode is a last resort, not a default: always try Decision Table / State Machine first. Use pseudocode only when those forms provably lose precision for the specific algorithm or protocol being described.
 
 ### 1.7 benchmark_docs Candidate Protocol
 
@@ -231,7 +233,8 @@ See the full 9-step process in `prompts/multi-model-review.md`. **Must run `mult
 | Step | Mandatory Action | Skippable Condition |
 |:---:|:---|:---|
 | 1 | For each `inputs.reference_projects[]`, use `prompts/reference-extraction.md` to produce a "Reference Implementation Report" (with Adoption Level table filtered by constraints). | Skippable if `reference_projects=none` and user explicitly waives, but final score cap drops to 7/10. |
-| 2 | Based on Step 1 + `inputs.benchmark_docs[]` depth, **draft a new version by chapters** (or majorly revise existing draft). Cover `inputs.required_sections[]`. | NOT skippable. |
+| 2 | Before drafting: **output a pseudocode inventory** — list every fenced code block in the document with: (a) block ID/location, (b) line count, (c) classification: `KEEP-CONTRACT` (≤10-line pure type/signature declaration), `KEEP-ALGO` (10–20-line language-agnostic pseudocode with required annotation — verify annotation exists; add if missing), or `DELETE` (impl blocks / method bodies / business logic / >20 lines / any block with real syntax / any block with crate/type not in project). Blocks classified `DELETE` must be removed and converted to decision tables or state machines in Step 3. This inventory is MANDATORY before any content change. | NOT skippable. |
+| 2b | Based on Step 1 + `inputs.benchmark_docs[]` depth, **draft a new version by chapters** (or majorly revise existing draft). Cover `inputs.required_sections[]`. | NOT skippable. |
 | 3 | Check if chapter depth matches benchmark (Implementation Strategy / Edge Cases / Integration / Output / Execution / Config / Phases / Error Handling). Deepen using §1.6 Morphological Constraints. **Deepening output is LIMITED to Decision Tables / Module Maps / Interface Contracts ≤ 10 lines / Data Flows / Error Matrices / Edge Case Checklists; do NOT "add depth" by adding pseudocode**. | NOT skippable. |
 | 4 | Model 2 independently drafts a comparison solution (Downgraded to "Red-team Persona" in L1). | NOT skippable; for L1, use Red-team persona + session clear. |
 | 5 | Comparison & Merger (or verify discrepancies after user rewrite). | NOT skippable. |
@@ -282,17 +285,18 @@ Use case: All optimization with "Improve Quality" semantics goes through this pa
 
 #### pre-writeback Gate (Mandatory — all must pass before write-back)
 
-> If ANY of the following 3 checks fails, **do NOT proceed to write-back**; return to Step 8 to fix, then re-run the gate:
+> If ANY of the following 4 checks fails, **do NOT proceed to write-back**; return to Step 8 to fix, then re-run the gate:
 
 | # | Check Item | Pass Condition |
 |:---:|:---|:---|
 | G-1 | **Change Propagation Complete** | If this session flipped any decision / changed a signature / added/removed config: all references to the changed item (body text, design rationale, summary tables, example code, common pitfalls, etc.) have been grepped and synced — no residual contradictions anywhere in the document |
 | G-2 | **Format Integrity** | All fenced code blocks in the document have correctly matched opening/closing ` ``` `; no markdown content (headings / tables / body text) is accidentally wrapped inside a code block |
 | G-3 | **Config Consistency** | If config keys were added/removed/renamed: all config tables, JSON examples, and `Default` columns in the document are in sync; no orphaned config rows remain |
+| G-4 | **No Residual Pseudocode** | The document does not contain any code blocks with `impl` blocks, method bodies, business logic, or syntax errors; all `DELETE` items from the pseudocode inventory in Step 2 have been converted to decision tables or state machines; all `KEEP-ALGO` blocks carry the required `<!-- pseudocode: language-agnostic, not for direct implementation -->` annotation |
 
 After all gates pass, output one confirmation line:
 ```
-pre-writeback gate: G-1 ✅ / G-2 ✅ / G-3 ✅ (or N/A)
+pre-writeback gate: G-1 ✅ / G-2 ✅ / G-3 ✅ / G-4 ✅（或 N/A）
 ```
 Then proceed to the write-back matrix below.
 

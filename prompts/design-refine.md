@@ -77,10 +77,11 @@ Process each section of the document in its original order. Apply the following 
 - Code uses crates not actually introduced (e.g., `fs2`, `mio`, undeclared traits).
 - Code references file paths inconsistent with the actual codebase.
 - Code exceeds 30 lines and only serves to illustrate design intent.
+- **Code block contains syntax errors** (e.g., missing closing `}`, duplicate comment blocks, truncated content). **Syntax errors are proof of unverified pseudocode — do NOT fix the syntax and keep the block. Delete it entirely.**
 
 **Replace with**: Decision Tables (see Rule 2).
 
-> **Exception**: Keep **at most 10 lines** for pseudocode snippets showing data structure definitions, API signatures, or critical flows; delete the rest.
+> **Exception**: Keep **at most 10 lines** ONLY for pure type/signature declarations: `struct`, `enum`, `type`, `trait` signature lines (no method bodies). `impl` blocks, function bodies, and business logic are **NOT** exceptions regardless of length.
 
 ### Rule 2: Replace Pseudocode with Decision Tables
 
@@ -234,6 +235,7 @@ Process according to these steps:
    - Configuration key additions or removals (new/delete/rename config keys)
    - Core decision column flip in a status table or decision table
    **grep scope**: all sections of the same document (body text, design rationale, summary tables, example code, common pitfalls, etc.); if other documents explicitly reference this decision, cross-document propagation is also required.
+10. **No Fixing Code Block Syntax Errors**: When a code block contains syntax errors (missing `}`, duplicate comments, truncated code), the correct action is to **delete the entire block** and convert it to a decision table. Do NOT patch the syntax error and keep the block. Fixing code in a design document is maintaining a codebase, not maintaining a design document.
 
 ---
 
@@ -254,6 +256,7 @@ Process according to these steps:
 - [ ] No violation of any `project_constraints[]` / `session_only[]`; conflicts recorded in §0.6 or escalated.
 - [ ] All "Non-goals," perf/latency caps, and isolation redlines from original doc preserved in §0.6 / §7 (Hard Constraint #8).
 - [ ] **[Change Propagation]** If this revision flipped any decision, changed a signature, or added/removed config keys: all references to the changed item (body text, design rationale, summary tables, example code, common pitfalls, etc.) have been grepped and synced; no residual contradictory statements remain in the document (Hard Constraint #9).
+- [ ] **[No Code Fix]** No syntax errors inside any code block were patched (missing `}`, duplicate comments, truncated code) — if such errors were found, the entire block was deleted and converted to a decision table (Hard Constraint #10).
 - [ ] **[Format Integrity]** All fenced code blocks are correctly paired (opening and closing ` ``` ` matched); no markdown content (headings / tables / body text) is accidentally wrapped inside a code block.
 - [ ] **[Config Consistency]** If config keys were added/removed/renamed: all config tables, JSON examples, and `Default` columns in the document are in sync; no orphaned config rows remain.
 

@@ -30,6 +30,39 @@ From `{METADATA_DIR}/config.json` or provided by the user:
 3. **Guided References**: At the end of each chapter, proactively ask "Would you like to supplement the implementation details of [Capability] from a certain reference project?"
 4. **No Faked Code Paths**: Must use `Grep/Read` to verify the actual existence of any `code_paths` before referencing them.
 5. **Skeleton First**: Use `templates/design-doc.md` in the first round to fill a complete skeleton (all chapter titles + TODO markers), then refine chapter by chapter in subsequent rounds.
+6. **Anti-Pseudocode Alignment**: All sections with "Implementation" semantics MUST use non-code forms (Decision Tables, Module Maps, etc.); pseudocode blocks > 10 lines are prohibited. See §Anti-Pseudocode Alignment below for full morphological constraints.
+
+---
+
+## Anti-Pseudocode Alignment (Morphological Constraints)
+
+> **Key Clarification**: Deep sections require "Design Decisions at the implementation level," **NOT the implementation code itself**. Code in design documents easily drifts from the actual codebase and causes ambiguity. This is a HARD RULE, consistent with `design-refine.md §Rule 1 / §Hard Constraint #1`.
+
+All sections with "Implementation" semantics (e.g., `Implementation Strategy`, `Key Tech Details`, `Core Component Design`) MUST be expressed in the following forms (non-code preferred; see Algorithmic Pseudocode for the narrow exception):
+
+| Form | Description | When to Use |
+|:---|:---|:---|
+| **Decision Table** | "Decision / Choice / Reason" columns; can add "Alternative / Rejection Reason." | Algorithm selection, concurrency primitives, data layout, error propagation. |
+| **Module Map** | "Target Responsibility / Reuse Existing Module (with path) / New Module (with target slice)." | Implementation path, avoid re-inventing existing logic. |
+| **Interface Contract Snippet** | Type definitions / Trait signatures / Function signatures, **≤ 10 lines per block**, for contract description only. | Cross-module boundaries, external API shape. |
+| **Data Flow / State Machine** | Mermaid or ASCII; draw states and transitions only, no implementation. | Complex control flow, life cycles. |
+| **Error Matrix** | "Error Source / Detection Point / Recovery Action / Residual Risk" columns. | Fault tolerance, degradation, rollback paths. |
+| **Edge Case Checklist** | Bulleted list; each item has a trigger condition + mitigation strategy. | Boundaries, race conditions, resource exhaustion. |
+| **Algorithmic Pseudocode** *(narrow exception)* | Language-agnostic logic sketch only. **≤ 20 lines per block**. Must be annotated `<!-- pseudocode: language-agnostic, not for direct implementation -->`. No real language syntax, no concrete crate/lib/type names not yet introduced in the project. | Non-trivial algorithms, complex guard conditions, or protocol logic where Decision Table / State Machine genuinely loses precision. If in doubt, use Decision Table instead. |
+
+**Redlines** (Rework triggered if violated, per `design-refine.md §Self-check #2 / §Hard Constraint #1`):
+
+- Code block > 20 lines → Always rework; replace with Decision Table, Module Map, or State Machine.
+- Code block 10–20 lines → Must qualify as Algorithmic Pseudocode: language-agnostic + `<!-- pseudocode: language-agnostic, not for direct implementation -->` annotation required; if missing annotation or contains real syntax, rework.
+- Implementation blocks like `fn xxx() { /* implementation */ }` (even if ≤ 10 lines) → Keep signature only if used as "Interface Contract"; function body MUST be deleted.
+- Appearance of crates / types / paths not yet introduced in the project → Treated as "Creating Code"; see Hard Constraints #1 / #2.
+- Chapter titles with **language names** like "Rust Implementation / Python Implementation" are considered anti-patterns; rename to "Implementation Strategy" / "Key Implementation Decisions" / "Implementation Mapping."
+
+**Depth Interpretation** (Resolving ambiguity between "Depth" and "Anti-pseudocode"):
+
+- Depth ≠ Code Volume. Depth = Decision Density + Boundary Coverage + Precise Mapping to existing code.
+- A qualified "Implementation Strategy" section contains **no function bodies** yet allows implementers to uniquely translate decisions into code.
+- Algorithmic Pseudocode is a last resort, not a default: always try Decision Table / State Machine first. Use pseudocode only when those forms provably lose precision for the specific algorithm or protocol being described.
 
 ---
 
@@ -82,7 +115,7 @@ Fill each chapter in order (recommended §0 → §1 → §2 → §3 → §4 → 
 3. **Draft Current Section**:
    - **§0 Implementation Status**: Must be specific; if none exists, explicitly write `not_started`.
    - **§2 Layered Architecture**: Use Mermaid or ASCII diagrams; categorize component tables by "Implemented / Planned."
-   - **§3 Core Components**: **Use Decision Tables** (Decision / Choice / Reason); prohibit pseudocode blocks > 10 lines.
+   - **§3 Core Components**: **Use Decision Tables** (Decision / Choice / Reason); all Implementation-semantic content MUST follow §Anti-Pseudocode Alignment morphological constraints — no pseudocode blocks > 10 lines, no function bodies, no non-existent crates/types/paths.
    - **§6 Key Risks**: Each item must carry a status marker (✅/⚠️/🔜) + target slice.
    - **§7 Acceptance Criteria**: Strictly distinguish between `[x]` (completed) and `[ ]` (planned).
    - **§8 File Planning**: Four clear categories (Created / Planned New / Planned Mod / Not Introduced).
@@ -118,7 +151,7 @@ After completion, run the 12-point audit from `prompts/design-refine.md`. If any
 | Reference project code is too massive to read | Use `prompts/reference-extraction.md` for targeted extraction of key implementation points. |
 | Benchmark doc quality is questionable | Remind user to revise the benchmark doc first, or switch to a finalized doc. |
 | Unsure about a design decision | Present 2-3 candidate options with a comparison table; let user decide. |
-| User requests pseudocode | Allowed but restricted: ≤ 10 lines per block; exceeding must be converted to a Decision Table. |
+| User requests pseudocode | Redirect to §Anti-Pseudocode Alignment: use Decision Tables / Module Maps / Interface Contracts (≤ 10 lines) / Data Flows / Error Matrices / Edge Case Checklists instead. If a signature-only snippet is needed as Interface Contract, ≤ 10 lines with no function body. |
 
 ---
 
